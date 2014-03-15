@@ -12,4 +12,6 @@ object Product {
   def findAll = products.toList.sortBy(_.ean)
   
   def findbyEan(ean : Long) = products.find(_.ean == ean)
+  
+  def add(product : Product) = products + product
 }
