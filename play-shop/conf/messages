@@ -1,0 +1,7 @@
+application.name=Play Shop
+
+ean=EAN
+name=Name
+description=Description
+
+products.details=Product: {0}
