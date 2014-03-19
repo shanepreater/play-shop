@@ -1,47 +1,39 @@
 package model
 
-import model.mongo.MongoExecuter
-import com.mongodb.casbah.{ MongoCollection, BulkWriteResult }
+import com.novus.salat.global._
+import com.novus.salat.annotations._
 import com.mongodb.casbah.Imports._
-import scalaz.IsEmpty
-import com.mongodb.casbah.commons.MongoDBObject
+import com.novus.salat.dao.{ SalatDAO, ModelCompanion }
 
-case class Product(ean: Long, name: String, description: String, id: String = "") {
-  def asDBObject =
-    if (id isEmpty)
-      MongoDBObject("ean" -> ean) ++
-        ("name" -> description) ++
-        ("name" -> description)
-    else
-      MongoDBObject("ean" -> ean) ++
-        ("name" -> description) ++
-        ("name" -> description) ++
-        ("_id" -> id)
-}
-
-object Product {
-  val collectionName = "Products"
-  MongoExecuter.executeWithCollection(collectionName) {
-    loadInitialDataset _
+object Product extends ModelCompanion[Product, ObjectId] {
+  val collection = MongoClient()("play-store")("products")
+  val dao = new SalatDAO[Product, ObjectId](collection = collection) {}
+  
+  def productCount = {
+    collection.size
   }
 
-  def loadInitialDataset(col: MongoCollection) = {
-    val numProducts = col.size
-    if (numProducts == 0) {
-      val operationBuilder = col.initializeOrderedBulkOperation
-      val products = Set(
-        Product(5018206244666L, "Widget1", "Small utility widget for floob").asDBObject,
-        Product(5010255079763L, "Widget2", "Medium sized octagonal widget").asDBObject,
-        Product(5018306312913L, "Widgetizer", "Widget maker with added stuff").asDBObject).foreach(operationBuilder.insert(_))
-      operationBuilder.execute.insertedCount
-    } else {
-      0
-    }
+  def loadInitialData = {
+    val products = Set(
+      Product(5018206244666L, "Widget1", "Small utility widget for floob"),
+      Product(5010255079763L, "Widget2", "Medium sized octagonal widget"),
+      Product(5018306312913L, "Widgetizer", "Widget maker with added stuff"))
+
+    products.foreach(insert(_))
   }
 
-  def findAll = products.toList.sortBy(_.ean)
+  def findAllProducts = { 
+    findAll toList //Eek this should probably be paged as it could be massive.
+  }
 
-  def findbyEan(ean: Long) = products.find(_.ean == ean)
+  def findbyEan(ean: Long) = {
+    val query = MongoDBObject("ean" -> ean)
+    findOne(query)
+  }
 
-  def add(product: Product) = products + product
+  def add(product: Product) = { (db: MongoDB) =>
+    insert(product)
+  }
 }
+
+case class Product(ean: Long, name: String, description: String, @Key("_id") id: ObjectId = new ObjectId)

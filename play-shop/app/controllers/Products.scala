@@ -9,17 +9,20 @@ import play.api.mvc.Flash
 import model.Product
 
 object Products extends Controller {
-  val productForm: Form[Product] = Form(
-		mapping(
-		  "ean" -> longNumber.verifying("validation.ean.duplicate", Product.findbyEan(_).isEmpty),
+  val productForm = Form(tuple(
+		  "ean" -> longNumber.verifying("validation.ean.duplicate", Product.findbyEan(_) match {
+  case Some(_) => true
+  case _ => false
+}),
 	      "name" -> nonEmptyText,
 	      "description" -> nonEmptyText
-		) (Product.apply)(Product.unapply)
-  )
+  ))
   
   def list = Action { implicit request => 
-    
-    val products = Product.findAll
+    if(Product.productCount == 0) {
+      println("What!")
+    }
+    val products = Product.findAllProducts
     
     Ok(views.html.products.list(products))
   }
@@ -38,8 +41,8 @@ object Products extends Controller {
               ("error" -> Messages("validation.errors")))
         },
         
-        success = { newProduct =>
-          Product.add(newProduct)
+        success = { formData =>
+          Product.add(Product(formData._1, formData._2, formData._3))
           val message = Messages("products.new.success", newProduct.name)
           Redirect(routes.Products.show(newProduct.ean)).
           	flashing("success" -> message)

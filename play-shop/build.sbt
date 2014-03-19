@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   //Pull in the barcode generator
   "net.sf.barcode4j" % "barcode4j" % "2.0",
   //Pull in the mongo support.
-  "org.mongodb" %% "casbah" % "2.7.0-RC2"
+  "org.mongodb" %% "casbah" % "2.7.0-RC2",
+  "com.novus" %% "salat" % "1.9.5"
   // Add your own project dependencies in the form:
   // "group" % "artifact" % "version"
 )
